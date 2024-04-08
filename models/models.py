@@ -255,34 +255,20 @@ class EndpointModel():
         new_session_stop_word = "[NEW]",
         stream = True,
         cache_prompt = True,
-        system_prompt=None,
+        system=None,
         **kwargs
     ):
         grammar = json_grammar if grammar == "json_grammar" else ""
         
-
-        default_system_prompt = """
-        You're an AI Large Language Model developed(created) by an AI developer named Tuấn Phạm, your task are to think loudly step by step before give a good and relevant response
-        to the user request based on their provided documents, answer in the language the user preferred. Only using the provided knowledge, not using your pretrained knowledge.
-
-        The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making.
-        The AI follows user requests. The AI thinks outside the box.
-
-        The AI will take turn in a multi-turn dialogs conversation with the user, stay in context with the previous chat.
-        """
         qas_id = "TEST"
         orig_answer_texts = "TEST"
-
-        prompted_input = system_prompt or default_system_prompt
-
-        final_message = prompted_input + f"Base on the provided documents, answer the following question:\n" + text
 
         config_prompt = format_prompt(
             AdvanceInstructSample, 
             {"qas_id": qas_id,
-            "system_prompt": prompted_input,
+            "system_prompt": system,
             "orig_answer_texts": orig_answer_texts,
-            "question_text": final_message
+            "question_text": text
         })
         
 
