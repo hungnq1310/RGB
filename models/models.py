@@ -1,5 +1,9 @@
 from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM
 import torch
+import json
+
+from .prompt_format import json_grammar, AdvanceInstructSample
+from .utils import format_prompt, api_inference
 
 class ChatglmModel:
     def __init__(self, plm = 'THUDM/chatglm-6b') -> None:
@@ -226,3 +230,84 @@ class OpenAIAPIModel():
             print(text)
             print(responses)
         return responses.json()['choices'][0]['message']['content']
+    
+class EndpointModel():
+    def __init__(self, url):
+        self.url = url + "/completion"
+        self.headers = {
+            "Content-Type": "application/json"
+        }
+
+
+    def generate(self, 
+        text: str, 
+        temperature=0.7, 
+        dynatemp_range = 0.3 ,
+        n_keep = -1 ,
+        grammar = "",
+        top_p = 0.45,
+        min_p = 0.045, 
+        seed = -1,
+        top_k = 60,
+        repeat_penalty = 1.15,
+        presence_penalty = 0,
+        frequency_penalty = 0,
+        new_session_stop_word = "[NEW]",
+        stream = True,
+        cache_prompt = True,
+        system_prompt=None,
+        **kwargs
+    ):
+        grammar = json_grammar if grammar == "json_grammar" else ""
+        
+
+        default_system_prompt = """
+        You're an AI Large Language Model developed(created) by an AI developer named Tuấn Phạm, your task are to think loudly step by step before give a good and relevant response
+        to the user request based on their provided documents, answer in the language the user preferred. Only using the provided knowledge, not using your pretrained knowledge.
+
+        The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making.
+        The AI follows user requests. The AI thinks outside the box.
+
+        The AI will take turn in a multi-turn dialogs conversation with the user, stay in context with the previous chat.
+        """
+        qas_id = "TEST"
+        orig_answer_texts = "TEST"
+
+        prompted_input = system_prompt or default_system_prompt
+
+        final_message = prompted_input + f"Base on the provided documents, answer the following question:\n" + text
+
+        config_prompt = format_prompt(
+            AdvanceInstructSample, 
+            {"qas_id": qas_id,
+            "system_prompt": prompted_input,
+            "orig_answer_texts": orig_answer_texts,
+            "question_text": final_message
+        })
+        
+
+        data = {
+            "prompt": config_prompt,
+            "temperature": temperature,
+            "dynatemp_range": dynatemp_range,
+            "n_keep": n_keep,
+            "stream": stream,
+            "cache_prompt": cache_prompt,
+            "grammar": grammar,
+            "top_p": top_p,
+            "min_p": min_p,
+            "seed": seed,
+            "top_k": top_k,
+            "repeat_penalty": repeat_penalty,
+            "presence_penalty": presence_penalty,
+            "frequency_penalty": frequency_penalty,
+        }
+
+        client = api_inference(self.url, self.headers, data, verify=False, stream=True)
+        assistant_message = ''
+        for event in client.events():
+            payload = json.loads(event.data)
+            chunk = payload['content']
+            assistant_message += chunk
+
+        return assistant_message
