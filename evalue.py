@@ -147,7 +147,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--dataset', type=str, default='en',
         help='evaluetion dataset',
-        choices=['en','zh','en_int','zh_int','en_fact','zh_fact']
+        choices=['en','zh','en_int','zh_int','en_fact','zh_fact', 'en_refine', 'zh_refine']
     )
     parser.add_argument(
         '--api_key', type=str, default='api_key',
