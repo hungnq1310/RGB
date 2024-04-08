@@ -107,7 +107,10 @@ def predict(query, ground_truth, docs, model, system, instruction, temperature, 
     if len(docs) == 0:
 
         text = instruction.format(QUERY=query, DOCS='')
-        prediction = model.generate(text, temperature)
+        prediction = model.generate(
+            text=text, 
+            temperature=temperature, 
+        )
 
     else:
 
@@ -117,7 +120,11 @@ def predict(query, ground_truth, docs, model, system, instruction, temperature, 
 
         text = instruction.format(QUERY=query, DOCS=docs)
 
-        prediction = model.generate(text, temperature, system)
+        prediction = model.generate(
+            text=text, 
+            temperature=temperature, 
+            system=system
+        )
 
     if 'zh' in dataset:
         prediction = prediction.replace(" ","")
